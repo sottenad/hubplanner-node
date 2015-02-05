@@ -1,26 +1,39 @@
 <h1>Hello</h1>
 
+<div class="row" id="output"></div>
+
+<script type="text/x-handlebars-template" id="samp">
+    <div class="entry">
+      <h1>{{title}}</h1>
+      <div class="body">
+        {{body}}
+      </div>
+    </div>
+</script>
+
+<script type="text/x-handlebars-template" id="hbRows">
 <div class="row">
     <div class="well">
-        <h4>{{projectCount}} active projects</h4>
+        <h4>\{{projectCount}} active projects</h4>
         <ul>
-        {{#each json}}
+        \{{#each projects}}
             <li>
-                {{name}} - <small>{{_id}}</small> <br />
-                {{#if budget.hasBudget}}
-                    {{#if budget.projectHours.active}}
-                        {{budget.projectHours.hours}}
-                    {{/if}}
-                    {{#if budget.cashAmount.active}}
-                        {{budget.cashAmount.amount}} @ {{budget.cashAmount.billingRate}}
+                \{{name}} - <small>\{{_id}}</small> <br />
+                \{{#if budget.hasBudget}}
+                    \{{#if budget.projectHours.active}}
+                       Hours: \{{budget.projectHours.hours}}
+                    \{{/if}}
+                    \{{#if budget.cashAmount.active}}
+                       Cash: $\{{budget.cashAmount.amount}}
                 
-                    {{/if}}
-                {{/if}}
+                    \{{/if}}
+                \{{/if}}
             </li>
-        {{/each}}
+        \{{/each}}
         </ul>
     </div>
 </div>
+</script>
 
 <div class="row">
     <h3>Timesheets</h3>

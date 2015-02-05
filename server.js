@@ -4,22 +4,40 @@ var expresshbs = require('express-handlebars');
 var request = require('request');
 var config = require('./config.js');
 var app = express();
+var router = express.Router();
 
-app.engine('handlebars', exphbs({defaultLayout: 'main'}));
+app.engine('handlebars', expresshbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 app.use(express.static(__dirname + '/public'));
 app.get('/', function(req,res){
     res.render('home'); 
 });
 
-app.get('/projects', function(req,res){
+
+//Timesheet endpoint - Send the project id and we'll get the timesheets
+router.get('/timesheet/:projectId', function(req,res){
     res.format({
         'application/json': function(){
-            var json = getProjects();
-            return json
+            getTimesheet(req.params.projectId, function(err,result){
+                res.send(result);
+            });
         }        
     })
 });
+
+//Project endpoint, just list out all projects
+app.get('/projects', function(req,res){
+    res.format({
+        'application/json': function(){
+                getProjects().then(function(result){
+                    res.send(result);
+                });
+            }
+        });        
+    })
+});
+
+
 
 var server = app.listen(3000,function(){
     var host = server.address().address;
@@ -41,8 +59,9 @@ var getReqOptions = function(endpoint){
 } 
 
 var getProjects = function(){
+    var defered = q.defer(); 
     var projectReq = getReqOptions('project');
-    request(projectReq,function(err, resp, body){
+    request(projectReq, function(err, resp, body){
         if (!err && resp.statusCode == 200) {
             var json = JSON.parse(body);
             var projects = [];
@@ -51,11 +70,16 @@ var getProjects = function(){
                     projects.push(el);
                 }
             });
+            //Now return
+            defered.resolve({'projects':projects});            
         }else{
-            console.log(err);   
+            defered.reject();
         }
     });
+    return defered.promise;
 }
 
+var getTimesheets = function(projectId){
+    
+}
 
-        
