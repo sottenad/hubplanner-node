@@ -1,0 +1,27 @@
+<h1>Hello</h1>
+
+<div class="row">
+    <div class="well">
+        <h4>{{projectCount}} active projects</h4>
+        <ul>
+        {{#each json}}
+            <li>
+                {{name}} - <small>{{_id}}</small> <br />
+                {{#if budget.hasBudget}}
+                    {{#if budget.projectHours.active}}
+                        {{budget.projectHours.hours}}
+                    {{/if}}
+                    {{#if budget.cashAmount.active}}
+                        {{budget.cashAmount.amount}} @ {{budget.cashAmount.billingRate}}
+                
+                    {{/if}}
+                {{/if}}
+            </li>
+        {{/each}}
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <h3>Timesheets</h3>
+</div>
