@@ -1,10 +1,18 @@
 var _ = require('underscore');
+var q = require('q');
 var express = require('express');
 var expresshbs = require('express-handlebars');
 var request = require('request');
 var config = require('./config.js');
 var app = express();
 var router = express.Router();
+
+var commonHeaders = {
+        'User-Agent': config.hubplanner_user_agent,
+        'Authorization': config.hubplanner_api_key,
+        'Accept': 'application/json',
+        'Content-type': 'application/json'
+    };
 
 app.engine('handlebars', expresshbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
@@ -13,9 +21,15 @@ app.get('/', function(req,res){
     res.render('home'); 
 });
 
+var server = app.listen(3000,function(){
+    var host = server.address().address;
+    var port = server.address().port;
+    console.log('Im listening at http://%s:%s', host, port);
+});
+
 
 //Timesheet endpoint - Send the project id and we'll get the timesheets
-router.get('/timesheet/:projectId', function(req,res){
+router.get('/timesheets/:projectId', function(req,res){
     res.format({
         'application/json': function(){
             getTimesheet(req.params.projectId, function(err,result){
@@ -29,48 +43,31 @@ router.get('/timesheet/:projectId', function(req,res){
 app.get('/projects', function(req,res){
     res.format({
         'application/json': function(){
-                getProjects().then(function(result){
-                    res.send(result);
-                });
-            }
-        });        
-    })
+            getProjects().then(function(result){
+                res.send(result);
+            });
+        }
+    });        
 });
 
 
 
-var server = app.listen(3000,function(){
-    var host = server.address().address;
-    var port = server.address().port;
-    console.log('Im listening at http://%s:%s', host, port);
-});
-
-var getReqOptions = function(endpoint){ 
-   var options =  {
-    url: config.hubplanner_endpoint + endpoint,
-    headers:{
-        'User-Agent': config.hubplanner_user_agent,
-        'Authorization': config.hubplanner_api_key,
-        'Accept': 'application/json',
-        'Content-type': 'application/json'
-    }
-   };
-  return options;
-} 
 
 var getProjects = function(){
     var defered = q.defer(); 
-    var projectReq = getReqOptions('project');
-    request(projectReq, function(err, resp, body){
+    var options =  {
+        url: config.hubplanner_endpoint + 'project',
+        json: true,
+        headers:commonHeaders
+    };
+    request(options, function(err, resp, body){
         if (!err && resp.statusCode == 200) {
-            var json = JSON.parse(body);
             var projects = [];
-            _.each(json, function(el,ind){
+            _.each(body, function(el,ind){
                 if(el.status == 'STATUS_ACTIVE'){
                     projects.push(el);
                 }
             });
-            //Now return
             defered.resolve({'projects':projects});            
         }else{
             defered.reject();
@@ -80,6 +77,23 @@ var getProjects = function(){
 }
 
 var getTimesheets = function(projectId){
-    
+    var defered = q.defer(); 
+    var options =  {
+        url: config.hubplanner_endpoint + 'timeentry',
+        json: true,
+        headers:commonHeaders,
+        body: {'project':projectId}
+    };
+    request(options, function(err, resp, body){
+        if (!err && resp.statusCode == 200) {
+            var json = JSON.parse(body);
+            var timesheets = json;
+            console.log(json);        
+            //Now return
+            defered.resolve({'timesheets':timesheets});            
+        }else{
+            defered.reject();
+        }
+    });
+    return defered.promise;
 }
-
